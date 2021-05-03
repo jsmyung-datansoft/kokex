@@ -1,0 +1,12 @@
+version: "3.7"
+
+services:
+  api_dev:
+    image: rurouni24/konlpy:python3.7
+    volumes:
+      - ../..:/kokex
+    command: ["/kokex/bin/docker/entrypoint.dev.sh"]
+    env_file:
+      - .env.dev
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
