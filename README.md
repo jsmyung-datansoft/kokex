@@ -1,5 +1,8 @@
 # kokex
 
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jsmyung-datansoft/kokex/Python%20package)
+![GitHub](https://img.shields.io/github/license/jsmyung-datansoft/kokex)
+
 한국어 문서 집합에서 키워드를 추출하는 라이브러리입니다. 
 구문분석을 통해 사전 없이도 고유명사, 복합명사, 신조어에 강건한 키워드 추출기를 만들고자 합니다.
 
