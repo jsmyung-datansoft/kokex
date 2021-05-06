@@ -1,15 +1,14 @@
-import html
 import re
 
 from konlpy.tag import Mecab
 
 from .preproc import preproc
-from .tree import ParseTree, NodeData
+from .tree import NodeData, ParseTree
 
 
 class DocumentParser:
     def __init__(self):
-        self.document = ''
+        self.document = ""
         self.morphs = []
         self.mecab = Mecab()
 
@@ -27,10 +26,12 @@ class DocumentParser:
             node_id=ParseTree.ID_ROOT,
             node_data=NodeData(
                 node_id=ParseTree.ID_ROOT,
-                node_type='문서',
+                node_type="문서",
                 org_txt_form=self.document,
-                pos_txt_form=' '.join([f'{morph[0]}/{morph[1]}' for morph in self.morphs])
-            )
+                pos_txt_form=" ".join(
+                    [f"{morph[0]}/{morph[1]}" for morph in self.morphs]
+                ),
+            ),
         )
 
         self._create_words()
@@ -60,7 +61,9 @@ class DocumentParser:
 
             # 추출된 신규 형태소 추가
             if start_txt_idx < end_txt_idx:
-                new_morphs.append((txt[start_txt_idx:end_txt_idx], 'SWS'))  # 특수문자는 SWS 태그를 준다
+                new_morphs.append(
+                    (txt[start_txt_idx:end_txt_idx], "SWS")
+                )  # 특수문자는 SWS 태그를 준다
 
             # 원래 morph도 신규로 추가
             new_morphs.append((morph, tag))
@@ -74,21 +77,22 @@ class DocumentParser:
 
         for idx, word in enumerate(words):
             # org_txt, pos_txt 계산
-            org_txt_form = ''
-            pos_txt_form = ''
+            org_txt_form = ""
+            pos_txt_form = ""
             for morph in word:
                 org_txt_form += morph[0]
-                pos_txt_form += morph[1] if len(pos_txt_form) == 0 else f'+{morph[1]}'
-            pos_txt_form = f'{org_txt_form}/{pos_txt_form}'
+                pos_txt_form += morph[1] if len(pos_txt_form) == 0 else f"+{morph[1]}"
+            pos_txt_form = f"{org_txt_form}/{pos_txt_form}"
 
             self.tree.add_node(
-                node_id=f'{ParseTree.ID_ROOT}_{idx:03d}',
+                node_id=f"{ParseTree.ID_ROOT}_{idx:03d}",
                 node_data=NodeData(
-                    node_id=f'{ParseTree.ID_ROOT}_{idx:03d}',
-                    node_type='단어',
+                    node_id=f"{ParseTree.ID_ROOT}_{idx:03d}",
+                    node_type="단어",
                     parent_node_id=ParseTree.ID_ROOT,
-                    org_txt_form=org_txt_form, pos_txt_form=pos_txt_form,
-                )
+                    org_txt_form=org_txt_form,
+                    pos_txt_form=pos_txt_form,
+                ),
             )
 
         self._create_composite_words()
@@ -104,21 +108,21 @@ class DocumentParser:
 
         for morph in morphs:
             # hashtag 처리
-            if not is_hashtag_mode and len(word) == 0 and morph[0] == '#':
+            if not is_hashtag_mode and len(word) == 0 and morph[0] == "#":
                 is_hashtag_mode = True
 
             if is_hashtag_mode:
-                if morph[1] == 'SWS':
+                if morph[1] == "SWS":
                     if len(word) > 0:
                         txt, pos = map(list, zip(*word))
-                        words.append([(''.join(txt), 'NNP')])
+                        words.append([("".join(txt), "NNP")])
                         word = []
                     words.append([morph])  # 현재 morph는 delimiter 인데, 독립적인 단어로 만든다
                     is_hashtag_mode = False
                 else:
-                    if morph[0] == '#' and len(word) > 0:
+                    if morph[0] == "#" and len(word) > 0:
                         txt, pos = map(list, zip(*word))
-                        words.append([(''.join(txt), 'NNP')])
+                        words.append([("".join(txt), "NNP")])
                         word = []
 
                     word.append(morph)
@@ -135,7 +139,7 @@ class DocumentParser:
                 if morph[0] == "'":
                     if len(word) > 0:
                         txt, pos = map(list, zip(*word))
-                        words.append([(''.join(txt), 'NNP')])
+                        words.append([("".join(txt), "NNP")])
                         word = []
                     words.append([morph])
                     is_single_quote_mode = False
@@ -149,8 +153,8 @@ class DocumentParser:
                 continue
 
             # 외국어가 모두 대문자이면 고유명사로 처리한다
-            if morph[1] == 'SL' and morph[0].isupper() and len(morph[0]) > 1:
-                morph = (morph[0], 'NNP')
+            if morph[1] == "SL" and morph[0].isupper() and len(morph[0]) > 1:
+                morph = (morph[0], "NNP")
 
             # 일반적인 단어 처리
             words.append([morph])
@@ -159,7 +163,7 @@ class DocumentParser:
         if len(word) > 0:
             if is_hashtag_mode:
                 txt, pos = map(list, zip(*word))
-                words.append([(''.join(txt), 'NNP')])
+                words.append([("".join(txt), "NNP")])
             else:
                 words.append(word)
 
@@ -167,9 +171,24 @@ class DocumentParser:
 
     def _create_composite_words(self):
         delimiters = [
-            'SF', 'SE', 'SSO', 'SSC', 'SC', 'SY', 'SWS',  # 기호/공백 문자로 구분
-            'JKS', 'JKC', 'JKG', 'JKO', 'JKB', 'JKV', 'JKQ', 'JX', 'JC',  # 명사 추출을 위해 관계언을 살려둔다
-            'IC', 'UNKNOWN'  # 감탄사 활용
+            "SF",
+            "SE",
+            "SSO",
+            "SSC",
+            "SC",
+            "SY",
+            "SWS",  # 기호/공백 문자로 구분
+            "JKS",
+            "JKC",
+            "JKG",
+            "JKO",
+            "JKB",
+            "JKV",
+            "JKQ",
+            "JX",
+            "JC",  # 명사 추출을 위해 관계언을 살려둔다
+            "IC",
+            "UNKNOWN",  # 감탄사 활용
         ]
         node_ids = self.tree.get_children_node_ids(parent_node_id=ParseTree.ID_ROOT)
 
@@ -180,7 +199,11 @@ class DocumentParser:
 
             if node_data.get_last_pos_tag() in delimiters:
                 if len(sub_nodes) > 1:
-                    self._create_sub_tree(parent_node_id=ParseTree.ID_ROOT, children_node_data=sub_nodes, node_type='단어')
+                    self._create_sub_tree(
+                        parent_node_id=ParseTree.ID_ROOT,
+                        children_node_data=sub_nodes,
+                        node_type="단어",
+                    )
                 sub_nodes = []
                 idx += 1
                 continue
@@ -189,7 +212,11 @@ class DocumentParser:
             idx += 1
 
         if len(sub_nodes) > 1:
-            self._create_sub_tree(parent_node_id=ParseTree.ID_ROOT, children_node_data=sub_nodes, node_type='단어')
+            self._create_sub_tree(
+                parent_node_id=ParseTree.ID_ROOT,
+                children_node_data=sub_nodes,
+                node_type="단어",
+            )
 
     def _create_josa_suffix_words(self):
         children_ids = self.tree.get_children_node_ids(parent_node_id=ParseTree.ID_ROOT)
@@ -199,26 +226,41 @@ class DocumentParser:
             child_data = self.tree.get_node_data_by_id(children_ids[idx])
             sub_nodes.append(child_data)
 
-            if child_data.get_last_pos_tag() == 'SWS':
+            if child_data.get_last_pos_tag() == "SWS":
                 sub_nodes = []
                 continue
-            if child_data.get_last_pos_tag() == 'SY' and len(child_data.org_txt_form) > 1:
+            if (
+                child_data.get_last_pos_tag() == "SY"
+                and len(child_data.org_txt_form) > 1
+            ):
                 if len(sub_nodes) > 0:
-                    self._create_sub_tree(parent_node_id=ParseTree.ID_ROOT, children_node_data=sub_nodes, node_type='단어')
+                    self._create_sub_tree(
+                        parent_node_id=ParseTree.ID_ROOT,
+                        children_node_data=sub_nodes,
+                        node_type="단어",
+                    )
                 sub_nodes = []
                 continue
-            if child_data.word_tag == '관계언':
-                self._create_sub_tree(parent_node_id=ParseTree.ID_ROOT, children_node_data=sub_nodes, node_type='단어')
+            if child_data.word_tag == "관계언":
+                self._create_sub_tree(
+                    parent_node_id=ParseTree.ID_ROOT,
+                    children_node_data=sub_nodes,
+                    node_type="단어",
+                )
                 sub_nodes = []
                 continue
 
     #### 유틸리티 함수 - 트리 분할 / 합병 관련
-    def _update_sub_tree_identifier(self, sub_root_node_data, new_node_id, new_parent_node_id, updated_data):
+    def _update_sub_tree_identifier(
+        self, sub_root_node_data, new_node_id, new_parent_node_id, updated_data
+    ):
         children_node_ids = self.tree.get_children_node_ids(sub_root_node_data.node_id)
 
         for idx, child_id in enumerate(children_node_ids):
             child_data = self.tree.get_node_data_by_id(child_id)
-            self._update_sub_tree_identifier(child_data, f'{new_node_id}_{idx:03d}', new_node_id, updated_data)
+            self._update_sub_tree_identifier(
+                child_data, f"{new_node_id}_{idx:03d}", new_node_id, updated_data
+            )
 
         self.tree.remove_node(sub_root_node_data.node_id)  # 기존 노드는 삭제
         sub_root_node_data.node_id = new_node_id  # 새로운 노드 ID를 부여
@@ -228,20 +270,28 @@ class DocumentParser:
     def _create_sub_tree(self, parent_node_id, children_node_data, node_type=None):
         if len(children_node_data) > 0:
             # org_txt, pos_txt 계산
-            org_txt_form = ''.join([node.org_txt_form for node in children_node_data])
-            pos_txt_form = ' '.join([node.pos_txt_form for node in children_node_data])
+            org_txt_form = "".join([node.org_txt_form for node in children_node_data])
+            pos_txt_form = " ".join([node.pos_txt_form for node in children_node_data])
 
             # 기존 node id 업데이트
             new_node_id = children_node_data[0].node_id
             updated_data = []
             for idx, node_data in enumerate(children_node_data):
-                self._update_sub_tree_identifier(node_data, f'{new_node_id}_{idx:03d}', new_node_id, updated_data)
+                self._update_sub_tree_identifier(
+                    node_data, f"{new_node_id}_{idx:03d}", new_node_id, updated_data
+                )
 
             # 신규 node 생성
-            self.tree.add_node(node_id=new_node_id, node_data=NodeData(
-                node_id=new_node_id, node_type=node_type, parent_node_id=parent_node_id,
-                org_txt_form=org_txt_form, pos_txt_form=pos_txt_form
-            ))
+            self.tree.add_node(
+                node_id=new_node_id,
+                node_data=NodeData(
+                    node_id=new_node_id,
+                    node_type=node_type,
+                    parent_node_id=parent_node_id,
+                    org_txt_form=org_txt_form,
+                    pos_txt_form=pos_txt_form,
+                ),
+            )
 
             # 기존 nodes 를 신규 node 하위로 이동
             for node_data in updated_data:
@@ -251,11 +301,15 @@ class DocumentParser:
     def condition_noun_candidates(self, x):
         node_data = self.tree.get_node_data_by_id(x)
         return (
-                (node_data.node_type == '단어' and node_data.word_tag in ['체언', '독립언'])
-                and (len(node_data.org_txt_form) > 1 or self._is_hanja(node_data.org_txt_form))
-                and node_data.org_txt_form not in [
-                    # 불용어
-                ]
+            (node_data.node_type == "단어" and node_data.word_tag in ["체언", "독립언"])
+            and (
+                len(node_data.org_txt_form) > 1
+                or self._is_hanja(node_data.org_txt_form)
+            )
+            and node_data.org_txt_form
+            not in [
+                # 불용어
+            ]
         )
 
     def nouns(self):

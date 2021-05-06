@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Dict
+from typing import Dict, List
 
 from kokex.core.parser import DocumentParser
 

@@ -1,12 +1,12 @@
-import uvicorn
+import sys
+from os import environ, path
+from typing import Dict, List
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import List, Dict
 
-from os import path, environ
-import sys
 sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
 SERVER_PORT = int(environ.get("SERVER_PORT", 8000))
 

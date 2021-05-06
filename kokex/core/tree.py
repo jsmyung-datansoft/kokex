@@ -1,11 +1,20 @@
 import re
+
 import networkx as nx
 
 
 class NodeData:
-    def __init__(self, node_id, node_type, parent_node_id=None,
-                 word_tag=None, sentence_tag=None, semantic_tag=None,
-                 org_txt_form=None, pos_txt_form=None):
+    def __init__(
+        self,
+        node_id,
+        node_type,
+        parent_node_id=None,
+        word_tag=None,
+        sentence_tag=None,
+        semantic_tag=None,
+        org_txt_form=None,
+        pos_txt_form=None,
+    ):
 
         self.__node_id = node_id
         self.__node_type = node_type
@@ -92,7 +101,7 @@ class NodeData:
 
 
 class ParseTree:
-    ID_ROOT = 'root'
+    ID_ROOT = "root"
 
     def __init__(self):
         self.g = nx.DiGraph()
@@ -111,13 +120,15 @@ class ParseTree:
             self.g.add_edge(node_data.parent_node_id, node_id)
 
         # 추가한 노드에 대한 후처리: 5언 7성분을 태깅
-        if node_data.node_type in ['단어', '구']:
+        if node_data.node_type in ["단어", "구"]:
             node_data.word_tag = self._compute_word_tag(node_data.get_last_pos_tag())
-        if node_data.node_type in ['단어', '구', '절']:
-            node_data.sentence_tag = self._compute_sentence_tag(node_data.get_last_pos_tag())
+        if node_data.node_type in ["단어", "구", "절"]:
+            node_data.sentence_tag = self._compute_sentence_tag(
+                node_data.get_last_pos_tag()
+            )
 
     def get_node_data_by_id(self, node_id: str):
-        return self.g.nodes[node_id]['data']
+        return self.g.nodes[node_id]["data"]
 
     def get_children_node_ids(self, parent_node_id: str):
         return sorted(self.g.adj[parent_node_id])
@@ -132,52 +143,57 @@ class ParseTree:
         return len(self.g.adj[node_id]) == 0
 
     def print_subtree(self, sub_root_node_id):
-        node_depth = len(sub_root_node_id.split('_')) - 1
-        node_data = self.g.nodes[sub_root_node_id]['data']
+        node_depth = len(sub_root_node_id.split("_")) - 1
+        node_data = self.g.nodes[sub_root_node_id]["data"]
         print(
-            ('\t' * node_depth) +
-            '[' + sub_root_node_id + '] ' +
-            '[' + node_data.node_id + '] ' +
-            '[' + (node_data.parent_node_id if node_data.parent_node_id else '') + '] ' +
-            node_data.pos_txt_form
+            ("\t" * node_depth)
+            + "["
+            + sub_root_node_id
+            + "] "
+            + "["
+            + node_data.node_id
+            + "] "
+            + "["
+            + (node_data.parent_node_id if node_data.parent_node_id else "")
+            + "] "
+            + node_data.pos_txt_form
         )
         for child_id in self.get_children_node_ids(sub_root_node_id):
             self.print_subtree(child_id)
-
 
     ##### 유틸리티함수 노드 태그 관련
     @staticmethod
     def _compute_word_tag(last_pos_tag: str):
         # 5언 계산
-        if last_pos_tag[0] == 'N' or last_pos_tag in ['ETN', 'XPN', 'XSN', 'SH']:
-            word_tag = '체언'
-        elif last_pos_tag[0] == 'V' or last_pos_tag in ['EP', 'EF', 'EC', 'XSV', 'XSA']:
-            word_tag = '용언'
-        elif last_pos_tag[0] == 'M' or last_pos_tag in ['ETM']:
-            word_tag = '수식언'
-        elif last_pos_tag[0] == 'J' or last_pos_tag in []:
-            word_tag = '관계언'
+        if last_pos_tag[0] == "N" or last_pos_tag in ["ETN", "XPN", "XSN", "SH"]:
+            word_tag = "체언"
+        elif last_pos_tag[0] == "V" or last_pos_tag in ["EP", "EF", "EC", "XSV", "XSA"]:
+            word_tag = "용언"
+        elif last_pos_tag[0] == "M" or last_pos_tag in ["ETM"]:
+            word_tag = "수식언"
+        elif last_pos_tag[0] == "J" or last_pos_tag in []:
+            word_tag = "관계언"
         else:
-            word_tag = '독립언'
+            word_tag = "독립언"
 
         return word_tag
 
     @staticmethod
     def _compute_sentence_tag(last_pos_tag: str):
         # 7성분 계산
-        if last_pos_tag in ['JKS']:
-            sentence_tag = '주어'
-        elif last_pos_tag in ['EP', 'EF', 'EC', 'ETN']:
-            sentence_tag = '서술어'
-        elif last_pos_tag in ['JKO']:
-            sentence_tag = '목적어'
-        elif last_pos_tag in ['JX', 'JKC']:
-            sentence_tag = '보어'
-        elif last_pos_tag in ['JKB', 'MAG']:
-            sentence_tag = '부사어'
-        elif last_pos_tag in ['ETM', 'JKG', 'MM']:
-            sentence_tag = '관형어'
+        if last_pos_tag in ["JKS"]:
+            sentence_tag = "주어"
+        elif last_pos_tag in ["EP", "EF", "EC", "ETN"]:
+            sentence_tag = "서술어"
+        elif last_pos_tag in ["JKO"]:
+            sentence_tag = "목적어"
+        elif last_pos_tag in ["JX", "JKC"]:
+            sentence_tag = "보어"
+        elif last_pos_tag in ["JKB", "MAG"]:
+            sentence_tag = "부사어"
+        elif last_pos_tag in ["ETM", "JKG", "MM"]:
+            sentence_tag = "관형어"
         else:
-            sentence_tag = '독립어'
+            sentence_tag = "독립어"
 
         return sentence_tag
