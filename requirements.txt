@@ -1,6 +1,9 @@
+black==21.5b0
 fastapi==0.63.0
+isort==5.8.0
 konlpy==0.5.2
 networkx==2.5.1
+pre-commit==2.12.1
 pytest==6.2.3
 sphinx==3.5.4
 sphinx-rtd-theme==0.5.2
