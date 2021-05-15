@@ -20,7 +20,7 @@ print(keywords)  # {'번째': 2, '문서': 3, '문장': 1, '포함': 2}
 ```
 
 ## 설치
-설치는 `pip` 를 이용하는 방법과 `docker-compose` 를 이용하는 방법이 있습니다.
+설치는 `pip` 를 이용하는 방법과 `docker` 를 이용하는 방법이 있습니다.
 
 #### pip
 
@@ -33,16 +33,22 @@ konlpy 의 [설치 안내](https://konlpy.org/ko/v0.5.2/install) 에 따라 Meca
 $ bash <(curl -s https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/mecab.sh)
 ```
 
-#### docker-compose
-도커 컴포즈가 있다면, 모든 의존성이 설치된 상태로 로컬 API 서버를 구동할 수 있습니다. 
-이 저장소를 clone 한 후에 `bin/run_server.sh` 를 실행하세요.
+#### docker
+도커를 사용한다면, 모든 의존성이 설치된 상태로 로컬 API 서버를 구동할 수 있습니다.
+```
+export KOKEX_PORT=80
+export KOKEX_VERSION=0.0.2
 
-`http://localhost:8081/docs` 에 접속하면 API 문서를 확인할 수 있습니다. 포트를 변경하고 싶다면 `.env.dev` 파일을 참고하세요.
+docker pull kokex/server:${KOKEX_VERSION}
+docker run -d -p ${KOKEX_PORT}:8081 --name kokex-server --rm kokex/server:${KOKEX_VERSION}
+```
+
+서버를 종료할 때는 `docker stop kokex-server` 를 입력하세요.
 
 서버를 실행하면 아래와 같이 http 요청을 처리할 수 있습니다.
 ```
 curl -X POST \
-  http://localhost:8081/keywords \
+  http://localhost/keywords \
   -d '{
 	"docs": [
 		"첫 번째 문서입니다. 여러 문장을 포함할 수 있습니다.", 
@@ -50,10 +56,23 @@ curl -X POST \
 	]
 }'
 ```
+그리고 `http://localhost/docs` 에 접속하면 API 문서를 확인할 수 있습니다. 
 
 ## 참여
-API 에 대한 수정, 제안은 새로운 이슈 생성을 통해 시작해주세요.
-모든 논의는 이슈의 댓글로 진행되면 좋겠습니다.
+모든 논의는 이슈를 통해 이루어지면 좋겠습니다.
 
-소스 코드를 수정한다면, `bin/run_test.sh` 를 실행하여 기존 테스트 문장의 분석 결과를 해치지 않도록 해야합니다.
-만약 새로운 테스트 문장을 추가한다면, `test` 디렉토리의 파일에서 해당 문장과 결과를 업데이트하세요. 
+#### API 사용자
+kokex api 를 사용하는 분들이라면 새로운 문장에 대한 분석 요청을 하실 수 있습니다.
+테스트 문장과 함께 원하는 분석결과를 담아 이슈를 생성하실 수 있도록 템플릿을 준비할 예정입니다.
+
+#### API 개발자
+kokex api 개발에 관심이 있으시다면, 이슈를 생성 후 논의를 진행하고, 수정한 사항을 PR 해주시면 됩니다.
+소스 코드를 수정하신다면, isort 와 black 으로 포맷팅을 해주시기 바랍니다. 저장소 복제 후 아래와 같이 입력하시면 이를 자동으로 체크할 수 있습니다.
+
+```
+pip install -r requirements.txt
+pre-commit install
+```
+
+그리고 `bin/run_test.sh` 를 실행하여 기존 테스트 문장의 분석 결과를 해치지 않도록 해야합니다.
+테스트 문장은, `test` 디렉토리의 test_{API_NAME}.py 파일에서 찾아보실 수 있습니다. 
