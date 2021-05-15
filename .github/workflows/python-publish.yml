@@ -34,7 +34,7 @@ jobs:
         DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       run: |
-        export KOKEX_VERSION=$(pythonc -c 'import kokex; print(kokex.__version__)')
+        export KOKEX_VERSION=$(python -c 'import kokex; print(kokex.__version__)')
         echo "KOKEX_VERSION=$KOKEX_VERSION"
         docker build -f docker/Dockerfile -t kokex/server:$KOKEX_VERSION .
         docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
