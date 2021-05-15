@@ -37,7 +37,7 @@ $ bash <(curl -s https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/
 도커를 사용한다면, 모든 의존성이 설치된 상태로 로컬 API 서버를 구동할 수 있습니다.
 ```
 export KOKEX_PORT=80
-export KOKEX_VERSION=0.0.4
+export KOKEX_VERSION=0.0.5
 
 docker pull kokex/server:${KOKEX_VERSION}
 docker run -d -p ${KOKEX_PORT}:8081 --name kokex-server --rm kokex/server:${KOKEX_VERSION}
