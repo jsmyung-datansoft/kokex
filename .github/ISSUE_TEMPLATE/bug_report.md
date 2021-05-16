@@ -1,6 +1,6 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: bug_report
+about: 예외 처리되지 않은 오류를 리포팅합니다.
 title: ''
 labels: bug
 assignees: ''
