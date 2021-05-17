@@ -320,3 +320,6 @@ class DocumentParser:
             result.append(self.tree.get_node_data_by_id(node_id).org_txt_form)
 
         return result
+
+    def printable_tree(self):
+        return self.tree.printable_subtree(sub_root_node_id=ParseTree.ID_ROOT)

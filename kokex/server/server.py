@@ -30,5 +30,19 @@ def keywords(kex_request: KEXRequestKeywords):
     return JSONResponse(content=result)
 
 
+class KEXRequestParse(BaseModel):
+    doc: str
+
+
+class KEXResponseParse(BaseModel):
+    tree_str: str
+
+
+@app.post("/parse", response_model=KEXResponseParse)
+def parse(kex_request: KEXRequestParse):
+    result = kokex.parse(kex_request.doc)
+    return JSONResponse(content=result)
+
+
 if __name__ == "__main__":
     uvicorn.run("server:app", reload=True, host="0.0.0.0", port=SERVER_PORT)
