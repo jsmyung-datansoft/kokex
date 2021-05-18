@@ -34,5 +34,5 @@ jobs:
         export KOKEX_VERSION=$(python -c 'import kokex; print(kokex.__version__)')
         echo "KOKEX_VERSION=$KOKEX_VERSION"
         docker build -f docker/Dockerfile -t kokex/server:$KOKEX_VERSION .
-        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
         docker push kokex/server:$KOKEX_VERSION
