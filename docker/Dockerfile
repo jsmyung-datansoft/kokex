@@ -10,7 +10,7 @@ WORKDIR ${HOME}
 # install dependencies
 COPY requirements.txt ${HOME}
 RUN apt-get update \
-&& apt-get install apt-utils python3-dev curl gcc g++ make git tzdata -y
+&& apt-get install apt-utils python3-dev curl gcc g++ make git tzdata -y \
 && pip install --no-cache-dir -r requirements.txt
 
 # install kokex
