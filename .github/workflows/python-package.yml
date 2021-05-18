@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: 6199/mecab-base-py37:latest
+    container: kokex/server-base:0.1.0
     steps:
     - name: Checkout Project
       uses: actions/checkout@main

@@ -1,4 +1,4 @@
-FROM 6199/mecab-base-py37:latest
+FROM kokex/server-base:0.1.0
 
 # set environment variables
 ENV HOME=/kokex
