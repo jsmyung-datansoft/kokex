@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     container: 6199/mecab-base-py37:latest
     steps:
-    - uses: Checkout Project
-    - name: actions/checkout@main
+    - name: Checkout Project
+      uses: actions/checkout@main
 
     - name: Install dependencies
       run: |
