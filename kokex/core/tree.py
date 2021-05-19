@@ -142,26 +142,33 @@ class ParseTree:
     def is_leaf(self, node_id: str):
         return len(self.g.adj[node_id]) == 0
 
-    def print_subtree(self, sub_root_node_id):
+    def printable_subtree(self, sub_root_node_id, debug=True):
         node_depth = len(sub_root_node_id.split("_")) - 1
         node_data = self.g.nodes[sub_root_node_id]["data"]
-        print(
-            ("\t" * node_depth)
-            + "["
-            + sub_root_node_id
-            + "] "
-            + "["
-            + node_data.node_id
-            + "] "
-            + "["
-            + (node_data.parent_node_id if node_data.parent_node_id else "")
-            + "] "
-            + node_data.pos_txt_form
-        )
-        for child_id in self.get_children_node_ids(sub_root_node_id):
-            self.print_subtree(child_id)
+        printable = ("\t" * node_depth) + "[" + node_data.node_id + "] "
+        if debug:
+            printable += (
+                "["
+                + node_data.node_type
+                + "] "
+                + "["
+                + (node_data.word_tag if node_data.word_tag else "")
+                + "] "
+                + "["
+                + (node_data.sentence_tag if node_data.sentence_tag else "")
+                + "] "
+                + node_data.pos_txt_form
+            )
+        else:
+            printable += node_data.org_txt_form
+        printable += "\n"
 
-    ##### 유틸리티함수 노드 태그 관련
+        for child_id in self.get_children_node_ids(sub_root_node_id):
+            printable += self.printable_subtree(child_id, debug=debug)
+
+        return printable
+
+    # 노드 태그 관련 유틸리티함수 시작
     @staticmethod
     def _compute_word_tag(last_pos_tag: str):
         # 5언 계산
