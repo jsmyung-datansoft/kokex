@@ -142,29 +142,29 @@ class ParseTree:
     def is_leaf(self, node_id: str):
         return len(self.g.adj[node_id]) == 0
 
-    def printable_subtree(self, sub_root_node_id):
+    def printable_subtree(self, sub_root_node_id, debug=True):
         node_depth = len(sub_root_node_id.split("_")) - 1
         node_data = self.g.nodes[sub_root_node_id]["data"]
-        printable = (
-            ("\t" * node_depth)
-            + "["
-            + node_data.node_id
-            + "] "
-            + "["
-            + node_data.node_type
-            + "] "
-            + "["
-            + (node_data.word_tag if node_data.word_tag else "")
-            + "] "
-            + "["
-            + (node_data.sentence_tag if node_data.sentence_tag else "")
-            + "] "
-            + node_data.pos_txt_form
-            + "\n"
-        )
+        printable = ("\t" * node_depth) + "[" + node_data.node_id + "] "
+        if debug:
+            printable += (
+                "["
+                + node_data.node_type
+                + "] "
+                + "["
+                + (node_data.word_tag if node_data.word_tag else "")
+                + "] "
+                + "["
+                + (node_data.sentence_tag if node_data.sentence_tag else "")
+                + "] "
+                + node_data.pos_txt_form
+            )
+        else:
+            printable += node_data.org_txt_form
+        printable += "\n"
 
         for child_id in self.get_children_node_ids(sub_root_node_id):
-            printable += self.printable_subtree(child_id)
+            printable += self.printable_subtree(child_id, debug=debug)
 
         return printable
 

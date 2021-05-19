@@ -1,6 +1,6 @@
 import sys
 from os import environ, path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import uvicorn
 from fastapi import FastAPI
@@ -32,6 +32,7 @@ def keywords(kex_request: KEXRequestKeywords):
 
 class KEXRequestParse(BaseModel):
     doc: str
+    debug: Optional[bool] = False
 
 
 class KEXResponseParse(BaseModel):
@@ -40,7 +41,7 @@ class KEXResponseParse(BaseModel):
 
 @app.post("/parse", response_model=KEXResponseParse)
 def parse(kex_request: KEXRequestParse):
-    result = kokex.parse(kex_request.doc)
+    result = kokex.parse(kex_request.doc, debug=kex_request.debug)
     return JSONResponse(content=result)
 
 

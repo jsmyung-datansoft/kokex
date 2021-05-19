@@ -321,5 +321,7 @@ class DocumentParser:
 
         return result
 
-    def printable_tree(self):
-        return self.tree.printable_subtree(sub_root_node_id=ParseTree.ID_ROOT)
+    def printable_tree(self, debug=True):
+        return self.tree.printable_subtree(
+            sub_root_node_id=ParseTree.ID_ROOT, debug=debug
+        )
