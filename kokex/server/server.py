@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
-SERVER_PORT = int(environ.get("SERVER_PORT", 8000))
+SERVER_PORT = int(environ.get("SERVER_PORT", 8081))
 
 import kokex
 
@@ -32,7 +32,7 @@ def keywords(kex_request: KEXRequestKeywords):
 
 class KEXRequestParse(BaseModel):
     doc: str
-    debug: Optional[bool] = False
+    debug: Optional[bool] = True
 
 
 class KEXResponseParse(BaseModel):
