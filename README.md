@@ -19,6 +19,7 @@ keywords = kokex.keywords([
 
 print(keywords)  # {'번째': 2, '문서': 3, '문장': 1, '포함': 2}
 ```
+더 자세한 사용법은 [문서](https://kokex.readthedocs.io/) 를 참고해주세요.
 
 ## 설치
 설치는 `pip` 를 이용하는 방법과 `docker` 를 이용하는 방법이 있습니다.
