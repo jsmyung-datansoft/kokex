@@ -1,11 +1,12 @@
-black==21.5b1
-fastapi==0.63.0
-isort==5.8.0
-konlpy==0.5.2
-myst-parser==0.14.0
-networkx==2.5.1
-pre-commit==2.12.1
-pytest==6.2.3
-sphinx==3.5.4
-sphinx-rtd-theme==0.5.2
-uvicorn[standard]==0.13.4
+black==21.5b1              # lint
+fastapi==0.63.0            # server
+isort==5.8.0               # lint
+konlpy==0.5.2              # essentail
+myst-parser==0.14.0        # documentation
+networkx==2.5.1            # essential
+pre-commit==2.12.1         # lint
+pytest==6.2.3              # test
+python-multipart==0.0.5    # fastapi Form 사용
+sphinx==3.5.4              # documentation
+sphinx-rtd-theme==0.5.2    # documentation
+uvicorn[standard]==0.13.4  # server

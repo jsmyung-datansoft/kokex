@@ -37,3 +37,10 @@ print(
 `문서위계`는 문서 / 문장 / 절 / 구 / 단어, `5언`은 체언 / 용언 / 수식언 / 관계언 / 독립언, 
 `7성분`은 주어 / 서술어 / 목적어 / 보어 / 부사어 / 관형어 / 독립어 로 구성됩니다. 
 품사는 [Mecab 품사 태그](https://docs.google.com/spreadsheets/d/1-9blXKjtjeKZqsf4NzHeYJCrr49-nXeRF6D80udfcwY/edit#gid=589544265) 를 참고해주세요.
+
+
+## Server
+도커를 이용하여 kokex server를 실행시켰다면 `http://localhost/parse` 에 접근해서 결과를 확인할 수 있습니다.
+아래는 테스트 문장의 입력 결과입니다.
+
+![server](_images/parse_server.png)

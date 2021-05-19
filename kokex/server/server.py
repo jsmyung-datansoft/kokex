@@ -3,8 +3,9 @@ from os import environ, path
 from typing import Dict, List, Optional
 
 import uvicorn
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
@@ -13,6 +14,7 @@ SERVER_PORT = int(environ.get("SERVER_PORT", 8081))
 import kokex
 
 app = FastAPI()
+templates = Jinja2Templates(directory="template")
 
 
 class KEXRequestKeywords(BaseModel):
@@ -30,19 +32,19 @@ def keywords(kex_request: KEXRequestKeywords):
     return JSONResponse(content=result)
 
 
-class KEXRequestParse(BaseModel):
-    doc: str
-    debug: Optional[bool] = True
+@app.get("/parse", response_class=HTMLResponse)
+def parse(request: Request):
+    return templates.TemplateResponse("parse.html", {"request": request, "result": ""})
 
 
-class KEXResponseParse(BaseModel):
-    tree_str: str
-
-
-@app.post("/parse", response_model=KEXResponseParse)
-def parse(kex_request: KEXRequestParse):
-    result = kokex.parse(kex_request.doc, debug=kex_request.debug)
-    return JSONResponse(content=result)
+@app.post("/parse", response_class=HTMLResponse)
+def parse(request: Request, doc: str = Form(...)):
+    result = kokex.parse(doc, debug=True)
+    result = result.replace("\n", "<br>")
+    result = result.replace("\t", "&nbsp;" * 4)
+    return templates.TemplateResponse(
+        "parse.html", {"request": request, "doc": doc, "result": result}
+    )
 
 
 if __name__ == "__main__":
