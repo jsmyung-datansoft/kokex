@@ -28,7 +28,20 @@ class KEXResponseKeywords(BaseModel):
 @app.post("/keywords", response_model=KEXResponseKeywords)
 def keywords(kex_request: KEXRequestKeywords):
     result = kokex.keywords(kex_request.docs)
+    return JSONResponse(content=result)
 
+
+class KEXRequestSentences(BaseModel):
+    doc: str
+
+
+class KEXResponseSentences(BaseModel):
+    sentences: List[str]
+
+
+@app.post("/sentences", response_model=KEXResponseSentences)
+def sentences(kex_request: KEXRequestSentences):
+    result = kokex.sentences(kex_request.doc)
     return JSONResponse(content=result)
 
 

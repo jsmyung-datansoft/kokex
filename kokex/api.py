@@ -23,6 +23,19 @@ def keywords(docs: List[str]) -> Dict[str, int]:
     return result
 
 
+def sentences(doc: str) -> List[str]:
+    """
+    문서를 입력 받아 문장으로 분리한 리스트를 리턴합니다
+
+    :param doc: 문서
+    :return: 문장으로 분리한 리스트
+    """
+    parser = DocumentParser()
+    parser.parse(document=doc)
+
+    return parser.sentences()
+
+
 def parse(doc: str, debug: bool = True):
     """
     문서를 입력받아서 파싱된 결과를 문자열로 리턴합니다
