@@ -484,7 +484,28 @@ class DocumentParser:
                     idx += 1
                     continue
 
-                # 기본적으로 문장의 주성분 (주어, 목적어, 서술어, 보어)일 때 구를 구분한다
+                # 문장의 부속성분 (관형어, 부사어) 와 관련한 구 구분 규칙
+                if child_node_data.sentence_tag in ["관형어", "부사어"]:
+
+                    # 관형어 뒤에 1) 체언으로 시작하는 단어, 2) 주어 혹은 목적어가 오면 합친다
+                    if child_node_data.sentence_tag in ["관형어"]:
+                        idx, sub_nodes = self.check_phrase_to_merge_next_word(
+                            idx,
+                            sub_nodes,
+                            children_node_ids,
+                            lambda next_node: next_node.word_tag in ["체언"]
+                            or next_node.sentence_tag in ["주어", "목적어"],
+                        )
+
+                    # 구 노드를 생성한다
+                    self._create_sub_tree(
+                        parent_node_id=sentence_node_id,
+                        children_node_data=sub_nodes,
+                        node_type="구",
+                    )
+                    sub_nodes = []
+
+                # 문장의 주성분 (주어, 목적어, 서술어, 보어) 과 관련한 구 구분 규칙
                 if child_node_data.sentence_tag in ["주어", "목적어", "서술어", "보어"]:
 
                     # 목적어 뒤에 오는 관형어를 처리한다: '중국을 방문한 대통령'을 '중국을 방문한' '대통령' 으로 나눈다
@@ -537,11 +558,13 @@ class DocumentParser:
     def check_phrase_to_merge_next_word(self, idx, sub_nodes, children_node_ids, rule):
         next_idx = idx + 1
         next_sub_nodes = []
+
+        # 공백문자를 건너뛴다
         while next_idx < len(children_node_ids):
             next_child_node_data = self.tree.get_node_data_by_id(
                 children_node_ids[next_idx]
             )
-            if next_child_node_data.get_last_pos_tag() in ["SWS"]:  # 공백문자를 건너뛴다
+            if next_child_node_data.get_last_pos_tag() in ["SWS"]:
                 next_sub_nodes.append(next_child_node_data)
                 next_idx += 1
                 continue
@@ -609,27 +632,36 @@ class DocumentParser:
             for node_data in updated_data:
                 self.tree.add_node(node_id=node_data.node_id, node_data=node_data)
 
-    ##### 명사 추출 관련 함수 시작
-    def condition_noun_candidates(self, x):
-        node_data = self.tree.get_node_data_by_id(x)
-        return (
-            (node_data.node_type == "단어" and node_data.word_tag in ["체언", "독립언"])
-            and (
-                len(node_data.org_txt_form) > 1
-                or self._is_hanja(node_data.org_txt_form)
-            )
-            and node_data.org_txt_form
-            not in [
-                # 불용어
-            ]
-        )
-
-    def nouns(self):
+    def keywords(self):
         result = []
+        queue = [ParseTree.ID_ROOT]
 
-        # 1단어 체언
-        for node_id in self.tree.filter_nodes(self.condition_noun_candidates):
-            result.append(self.tree.get_node_data_by_id(node_id).org_txt_form)
+        while len(queue) > 0:
+            node_id = queue.pop(0)
+            node_data = self.tree.get_node_data_by_id(node_id)
+
+            if (
+                node_data.node_type == "구"
+                and node_data.word_tag == "체언"
+                and node_data.sentence_tag == "독립어"
+                and (not node_data.org_txt_form.endswith("할 수"))
+            ):
+                result.append(node_data.org_txt_form)
+                continue
+
+            if (
+                node_data.node_type == "단어"
+                and node_data.word_tag in ["체언", "독립언"]
+                and (
+                    len(node_data.org_txt_form) > 1
+                    or self._is_hanja(node_data.org_txt_form)
+                )
+            ):
+                result.append(node_data.org_txt_form)
+                continue
+
+            # 자식노드를 큐에 추가
+            queue += self.tree.get_children_node_ids(node_id)
 
         return result
 

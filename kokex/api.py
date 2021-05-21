@@ -17,8 +17,8 @@ def keywords(docs: List[str]) -> Dict[str, int]:
     for doc in docs:
         parser.parse(document=doc)
 
-        for noun in parser.nouns():
-            result[noun] += 1
+        for word in parser.keywords():
+            result[word] += 1
 
     return result
 
