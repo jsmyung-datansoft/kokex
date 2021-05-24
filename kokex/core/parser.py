@@ -8,28 +8,28 @@ from .tree import NodeData, ParseTree
 
 class DocumentParser:
     def __init__(self):
-        self.document = ""
-        self.morphs = []
-        self.mecab = Mecab()
+        self._document = ""
+        self._morphs = []
+        self._mecab = Mecab()
 
         # tree initialization
-        self.tree = ParseTree()
+        self._tree = ParseTree()
 
     def parse(self, document):
         # preprocessing
-        self.document = preproc(document)
-        self.morphs = self._morphs_with_specialchars(self.document)
+        self._document = preproc(document)
+        self._morphs = self._morphs_with_specialchars(self._document)
 
         # root 생성
-        self.tree.clear()
-        self.tree.add_node(
+        self._tree.clear()
+        self._tree.add_node(
             node_id=ParseTree.ID_ROOT,
             node_data=NodeData(
                 node_id=ParseTree.ID_ROOT,
                 node_type="문서",
-                org_txt_form=self.document,
+                org_txt_form=self._document,
                 pos_txt_form=" ".join(
-                    [f"{morph[0]}/{morph[1]}" for morph in self.morphs]
+                    [f"{morph[0]}/{morph[1]}" for morph in self._morphs]
                 ),
             ),
         )
@@ -48,7 +48,7 @@ class DocumentParser:
 
     # mecab이 공백/개행문자등을 걸러내서, 이를 보전하기 위한 유틸리티 함수
     def _morphs_with_specialchars(self, txt):
-        old_morphs = self.mecab.pos(txt)
+        old_morphs = self._mecab.pos(txt)
         new_morphs = []
         txt_idx = 0
         for morph, tag in old_morphs:
@@ -79,7 +79,7 @@ class DocumentParser:
     ##### create_word 관련 함수 시작
     def _create_words(self):
         """Create word nodes from morphs"""
-        words = self._words_from_morphs(self.morphs)
+        words = self._words_from_morphs(self._morphs)
 
         for idx, word in enumerate(words):
             # org_txt, pos_txt 계산
@@ -90,7 +90,7 @@ class DocumentParser:
                 pos_txt_form += morph[1] if len(pos_txt_form) == 0 else f"+{morph[1]}"
             pos_txt_form = f"{org_txt_form}/{pos_txt_form}"
 
-            self.tree.add_node(
+            self._tree.add_node(
                 node_id=f"{ParseTree.ID_ROOT}_{idx:03d}",
                 node_data=NodeData(
                     node_id=f"{ParseTree.ID_ROOT}_{idx:03d}",
@@ -196,12 +196,12 @@ class DocumentParser:
             "IC",
             "UNKNOWN",  # 감탄사 활용
         ]
-        node_ids = self.tree.get_children_node_ids(parent_node_id=ParseTree.ID_ROOT)
+        node_ids = self._tree.get_children_node_ids(parent_node_id=ParseTree.ID_ROOT)
 
         idx = 0
         sub_nodes = []
         while idx < len(node_ids):
-            node_data = self.tree.get_node_data_by_id(node_ids[idx])
+            node_data = self._tree.get_node_data_by_id(node_ids[idx])
 
             if node_data.get_last_pos_tag() in delimiters:
                 if len(sub_nodes) > 1:
@@ -225,11 +225,13 @@ class DocumentParser:
             )
 
     def _create_josa_suffix_words(self):
-        children_ids = self.tree.get_children_node_ids(parent_node_id=ParseTree.ID_ROOT)
+        children_ids = self._tree.get_children_node_ids(
+            parent_node_id=ParseTree.ID_ROOT
+        )
 
         sub_nodes = []
         for idx, child_id in enumerate(children_ids):
-            child_data = self.tree.get_node_data_by_id(children_ids[idx])
+            child_data = self._tree.get_node_data_by_id(children_ids[idx])
             sub_nodes.append(child_data)
 
             if child_data.get_last_pos_tag() == "SWS":
@@ -258,14 +260,14 @@ class DocumentParser:
 
     ##### identify_sub_document 관련 함수 시작
     def _identify_sub_documents(self):
-        children_node_ids = self.tree.get_children_node_ids(
+        children_node_ids = self._tree.get_children_node_ids(
             parent_node_id=ParseTree.ID_ROOT
         )
 
         sub_nodes = []
         is_sub_document = False
         for idx, child_node_id in enumerate(children_node_ids):
-            child_node_data = self.tree.get_node_data_by_id(children_node_ids[idx])
+            child_node_data = self._tree.get_node_data_by_id(children_node_ids[idx])
 
             if not is_sub_document and 1 in map(
                 lambda x: 1 if child_node_data.org_txt_form.find(x) > -1 else 0,
@@ -307,16 +309,16 @@ class DocumentParser:
                     return node_id
             return None
 
-        document_node_id = get_not_processed_document_node_id(self.tree)
+        document_node_id = get_not_processed_document_node_id(self._tree)
         while document_node_id:
-            children_node_ids = self.tree.get_children_node_ids(
+            children_node_ids = self._tree.get_children_node_ids(
                 parent_node_id=document_node_id
             )
 
             sub_nodes = []
             idx = 0
             while idx < len(children_node_ids):
-                child_node_data = self.tree.get_node_data_by_id(children_node_ids[idx])
+                child_node_data = self._tree.get_node_data_by_id(children_node_ids[idx])
 
                 # 문장의 처음에 공백문자를 추가하지 않는다
                 if len(sub_nodes) == 0 and child_node_data.get_last_pos_tag() == "SWS":
@@ -333,7 +335,7 @@ class DocumentParser:
                 if child_node_data.get_last_pos_tag() in ["EF", "SF"]:
                     idx += 1
                     while idx < len(children_node_ids):
-                        next_child_node_data = self.tree.get_node_data_by_id(
+                        next_child_node_data = self._tree.get_node_data_by_id(
                             children_node_ids[idx]
                         )
                         if next_child_node_data.get_last_pos_tag() in [
@@ -365,7 +367,7 @@ class DocumentParser:
                 ):
                     next_idx = idx + 1
                     if next_idx < len(children_node_ids):
-                        next_child_node_data = self.tree.get_node_data_by_id(
+                        next_child_node_data = self._tree.get_node_data_by_id(
                             children_node_ids[next_idx]
                         )
                         if next_child_node_data.get_last_pos_tag() in ["SWS"]:
@@ -384,7 +386,7 @@ class DocumentParser:
                 ):
                     idx += 1
                     while idx < len(children_node_ids):
-                        next_child_node_data = self.tree.get_node_data_by_id(
+                        next_child_node_data = self._tree.get_node_data_by_id(
                             children_node_ids[idx]
                         )
                         if next_child_node_data.get_last_pos_tag() in [
@@ -418,7 +420,7 @@ class DocumentParser:
                 elif child_node_data.get_last_pos_tag() in ["IC"]:
                     idx += 1
                     while idx < len(children_node_ids):
-                        next_child_node_data = self.tree.get_node_data_by_id(
+                        next_child_node_data = self._tree.get_node_data_by_id(
                             children_node_ids[idx]
                         )
                         if next_child_node_data.get_last_pos_tag() in ["IC", "SWS"]:
@@ -445,7 +447,7 @@ class DocumentParser:
                     children_node_data=sub_nodes,
                     node_type="문장",
                 )
-            document_node_id = get_not_processed_document_node_id(self.tree)
+            document_node_id = get_not_processed_document_node_id(self._tree)
 
     def _identify_phrases(self):
         def is_sentence_node_processed(tree, node_id):
@@ -462,16 +464,16 @@ class DocumentParser:
                     return node_id
             return None
 
-        sentence_node_id = get_not_processed_sentence_node_id(self.tree)
+        sentence_node_id = get_not_processed_sentence_node_id(self._tree)
         while sentence_node_id:
-            children_node_ids = self.tree.get_children_node_ids(
+            children_node_ids = self._tree.get_children_node_ids(
                 parent_node_id=sentence_node_id
             )
 
             sub_nodes = []
             idx = 0
             while idx < len(children_node_ids):
-                child_node_data = self.tree.get_node_data_by_id(children_node_ids[idx])
+                child_node_data = self._tree.get_node_data_by_id(children_node_ids[idx])
 
                 # 구의 처음에 공백문자를 추가하지 않는다
                 if len(sub_nodes) == 0 and child_node_data.get_last_pos_tag() == "SWS":
@@ -553,7 +555,7 @@ class DocumentParser:
                     children_node_data=sub_nodes,
                     node_type="구",
                 )
-            sentence_node_id = get_not_processed_sentence_node_id(self.tree)
+            sentence_node_id = get_not_processed_sentence_node_id(self._tree)
 
     def check_phrase_to_merge_next_word(self, idx, sub_nodes, children_node_ids, rule):
         next_idx = idx + 1
@@ -561,7 +563,7 @@ class DocumentParser:
 
         # 공백문자를 건너뛴다
         while next_idx < len(children_node_ids):
-            next_child_node_data = self.tree.get_node_data_by_id(
+            next_child_node_data = self._tree.get_node_data_by_id(
                 children_node_ids[next_idx]
             )
             if next_child_node_data.get_last_pos_tag() in ["SWS"]:
@@ -572,7 +574,7 @@ class DocumentParser:
                 break
 
         if next_idx < len(children_node_ids):
-            next_child_node_data = self.tree.get_node_data_by_id(
+            next_child_node_data = self._tree.get_node_data_by_id(
                 children_node_ids[next_idx]
             )
             if rule(next_child_node_data):
@@ -589,15 +591,15 @@ class DocumentParser:
     def _update_sub_tree_identifier(
         self, sub_root_node_data, new_node_id, new_parent_node_id, updated_data
     ):
-        children_node_ids = self.tree.get_children_node_ids(sub_root_node_data.node_id)
+        children_node_ids = self._tree.get_children_node_ids(sub_root_node_data.node_id)
 
         for idx, child_id in enumerate(children_node_ids):
-            child_data = self.tree.get_node_data_by_id(child_id)
+            child_data = self._tree.get_node_data_by_id(child_id)
             self._update_sub_tree_identifier(
                 child_data, f"{new_node_id}_{idx:03d}", new_node_id, updated_data
             )
 
-        self.tree.remove_node(sub_root_node_data.node_id)  # 기존 노드는 삭제
+        self._tree.remove_node(sub_root_node_data.node_id)  # 기존 노드는 삭제
         sub_root_node_data.node_id = new_node_id  # 새로운 노드 ID를 부여
         sub_root_node_data.parent_node_id = new_parent_node_id
         updated_data.append(sub_root_node_data)  # 데이터를 유지하여 추후 다시 추가할 수 있도록 함
@@ -617,7 +619,7 @@ class DocumentParser:
                 )
 
             # 신규 node 생성
-            self.tree.add_node(
+            self._tree.add_node(
                 node_id=new_node_id,
                 node_data=NodeData(
                     node_id=new_node_id,
@@ -630,7 +632,7 @@ class DocumentParser:
 
             # 기존 nodes 를 신규 node 하위로 이동
             for node_data in updated_data:
-                self.tree.add_node(node_id=node_data.node_id, node_data=node_data)
+                self._tree.add_node(node_id=node_data.node_id, node_data=node_data)
 
     def keywords(self):
         result = []
@@ -638,7 +640,7 @@ class DocumentParser:
 
         while len(queue) > 0:
             node_id = queue.pop(0)
-            node_data = self.tree.get_node_data_by_id(node_id)
+            node_data = self._tree.get_node_data_by_id(node_id)
 
             if (
                 node_data.node_type == "구"
@@ -661,21 +663,21 @@ class DocumentParser:
                 continue
 
             # 자식노드를 큐에 추가
-            queue += self.tree.get_children_node_ids(node_id)
+            queue += self._tree.get_children_node_ids(node_id)
 
         return result
 
     ##### 문장 분리 관련 함수 시작
     def sentences(self):
         result = []
-        for node_id in self.tree.filter_nodes(
-            lambda x: self.tree.get_node_data_by_id(x).node_type == "문장"
+        for node_id in self._tree.filter_nodes(
+            lambda x: self._tree.get_node_data_by_id(x).node_type == "문장"
         ):
-            node_data = self.tree.get_node_data_by_id(node_id)
+            node_data = self._tree.get_node_data_by_id(node_id)
             result.append(node_data.org_txt_form)
         return result
 
     def printable_tree(self, debug=True):
-        return self.tree.printable_subtree(
+        return self._tree.printable_subtree(
             sub_root_node_id=ParseTree.ID_ROOT, debug=debug
         )
