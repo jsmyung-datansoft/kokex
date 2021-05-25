@@ -3,4 +3,4 @@
 """
 from kokex.api import keywords, parse, sentences
 
-__version__ = "0.0.10"
+__version__ = "0.0.11"
