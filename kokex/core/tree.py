@@ -92,11 +92,11 @@ class NodeData:
         self.__pos_txt_form = value
 
     def get_last_pos_tag(self):
-        p = re.compile(r"(?<=[/+])[A-Z]+$")
+        p = re.compile(r"(?<=[/+])[A-Z0-9_]+$")
         return p.findall(self.pos_txt_form)[0]
 
     def get_first_pos_tag(self):
-        p = re.compile(r"(?<=/)[A-Z]+")
+        p = re.compile(r"(?<=/)[A-Z0-9_]+")
         return p.findall(self.pos_txt_form)[0]
 
 

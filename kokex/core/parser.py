@@ -15,10 +15,27 @@ class DocumentParser:
         # tree initialization
         self._tree = ParseTree()
 
-    def parse(self, document):
+    def parse(
+        self,
+        document,
+        proc_composite_word=True,
+        proc_josa=True,
+        proc_phrase=True,
+        custom_patterns=[],
+    ):
+        """
+        문서를 입력 받아 파싱 트리를 생성합니다.
+
+        :param document: 분석대상 문서
+        :param proc_composite_word: 복합명사를 처리할 것인가 (기본값 True)
+        :param proc_josa: 조사를 앞단어에 붙여서 하나의 단어로 처리할 것인가 (기본값 True)
+        :param proc_phrase: 구 단위 분석을 수행할 것인가 (기본값 True)
+        :param custom_patterns: 정규식 패턴과 매칭된 문자열을 위한 형태소 태그 [{'pattern': string, 'tag': string}]
+        :return: void
+        """
         # preprocessing
         self._document = preproc(document)
-        self._morphs = self._morphs_with_specialchars(self._document)
+        self._morphs = self._create_morphs(self._document, custom_patterns)
 
         # root 생성
         self._tree.clear()
@@ -34,50 +51,95 @@ class DocumentParser:
             ),
         )
 
-        self._create_words()
+        self._create_words(proc_composite_word, proc_josa)
 
         self._identify_sub_documents()
         self._identify_sentences()
 
-        self._identify_phrases()
-        self._identify_clauses()
+        if proc_phrase:
+            self._identify_phrases()
 
     def _is_hanja(self, text):
         re_pattern = r"[\u2e80-\u2eff\u31c0-\u31ef\u3200-\u32ff\u3400-\u4dbf\u4e00-\u9fbf\uf900-\ufaff]"
         return re.match(pattern=re_pattern, string=text)
 
-    # mecab이 공백/개행문자등을 걸러내서, 이를 보전하기 위한 유틸리티 함수
-    def _morphs_with_specialchars(self, txt):
+    # mecab이 공백/개행문자등을 걸러내기 때문에 이를 보전하기 위한 처리를 하고, 또한 입력받은 정규식 패턴은 하나의 형태소로 처리한다
+    def _create_morphs(self, txt, custom_patterns):
         old_morphs = self._mecab.pos(txt)
         new_morphs = []
         txt_idx = 0
         for morph, tag in old_morphs:
+            # 공백/개행문자 탐지
             morph_idx = 0
 
-            # morph 에 해당하지 않는 문자열이 원문 텍스트에 있는 경우 추출
             start_txt_idx = txt_idx
             while txt[txt_idx] != morph[morph_idx]:
                 txt_idx += 1
             end_txt_idx = txt_idx
+
+            # 공백/개행문자가 있다면 형태소 추가
+            if start_txt_idx < end_txt_idx:
+                new_morphs.append(
+                    (txt[start_txt_idx:end_txt_idx], "SWS")
+                )  # 특수문자는 SWS 태그를 준다
 
             # morph 에 해당하는 문자열은 건너뜀
             while morph_idx < len(morph) and txt[txt_idx] == morph[morph_idx]:
                 txt_idx += 1
                 morph_idx += 1
 
-            # 추출된 신규 형태소 추가
-            if start_txt_idx < end_txt_idx:
-                new_morphs.append(
-                    (txt[start_txt_idx:end_txt_idx], "SWS")
-                )  # 특수문자는 SWS 태그를 준다
-
-            # 원래 morph도 신규로 추가
+            # 원래 morph 형태소 추가
             new_morphs.append((morph, tag))
 
-        return new_morphs
+        # 정규표현식 패턴 매칭 시작
+        matched_morphs = []
+
+        # 패턴 매칭 결과를 저장해둔다
+        matched_patterns = []
+        for pattern in custom_patterns:
+            # 패턴 유효성 검사
+            for c in pattern["tag"]:
+                if (not "A" <= c <= "Z") and (not "0" <= c <= "9") and (not c == "_"):
+                    raise Exception("패턴 tag 는 영문대문자 / 숫자 / 밑줄(_) 만 사용할 수 있습니다")
+
+            for match in re.finditer(pattern["pattern"], txt):
+                matched_patterns.append(
+                    {
+                        "start": match.start(),
+                        "end": match.end(),
+                        "txt": match.group(),
+                        "tag": pattern["tag"],
+                        "processing": False,
+                    }
+                )
+
+        # 패턴 매칭 형태소를 생성한다
+        txt_idx = 0
+        match = None
+        for morph, tag in new_morphs:
+            if match:
+                txt_idx += len(morph)
+                if txt_idx == match["end"]:
+                    matched_morphs.append((match["txt"], match["tag"]))
+                    match = None
+            else:
+                for matched_pattern in matched_patterns:
+                    if matched_pattern["start"] == txt_idx:
+                        match = matched_pattern
+                        break
+                if match:
+                    txt_idx += len(morph)
+                    if txt_idx == match["end"]:
+                        matched_morphs.append((match["txt"], match["tag"]))
+                        match = None
+                else:
+                    txt_idx += len(morph)
+                    matched_morphs.append((morph, tag))
+
+        return matched_morphs
 
     ##### create_word 관련 함수 시작
-    def _create_words(self):
+    def _create_words(self, proc_composite_word=True, proc_josa=True):
         """Create word nodes from morphs"""
         words = self._words_from_morphs(self._morphs)
 
@@ -101,8 +163,10 @@ class DocumentParser:
                 ),
             )
 
-        self._create_composite_words()
-        self._create_josa_suffix_words()
+        if proc_composite_word:
+            self._create_composite_words()
+        if proc_josa:
+            self._create_josa_suffix_words()
 
     # 형태소 분석결과에서 구분자 태그를 이용해 단어를 추출한다.
     def _words_from_morphs(self, morphs):
@@ -234,11 +298,11 @@ class DocumentParser:
             child_data = self._tree.get_node_data_by_id(children_ids[idx])
             sub_nodes.append(child_data)
 
-            if child_data.get_last_pos_tag() == "SWS":
+            if child_data.get_last_pos_tag() == "SWS":  # 공백/개행문자 처리
                 sub_nodes = []
                 continue
             if (
-                child_data.get_last_pos_tag() == "SY"
+                child_data.get_last_pos_tag() == "SY"  # 기호 처리
                 and len(child_data.org_txt_form) > 1
             ):
                 if len(sub_nodes) > 0:
@@ -249,7 +313,7 @@ class DocumentParser:
                     )
                 sub_nodes = []
                 continue
-            if child_data.word_tag == "관계언":
+            if child_data.word_tag == "관계언":  # 조사 처리 (모든 조사는 관계언에 속함)
                 self._create_sub_tree(
                     parent_node_id=ParseTree.ID_ROOT,
                     children_node_data=sub_nodes,
@@ -583,9 +647,6 @@ class DocumentParser:
                 idx = next_idx
 
         return idx, sub_nodes
-
-    def _identify_clauses(self):
-        pass
 
     ##### 유틸리티 함수 - 트리 분할 / 합병 관련
     def _update_sub_tree_identifier(

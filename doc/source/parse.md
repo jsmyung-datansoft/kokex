@@ -44,3 +44,23 @@ print(
 아래는 테스트 문장의 입력 결과입니다.
 
 ![server](_images/parse_server.png)
+
+
+## Patterns (API 에서만 지원)
+parse 함수에서는 정규식 패턴을 입력하여 사용자 정의 형태소를 추가할 수 있습니다. 아래의 두 가지 예시를 비교해보세요.
+```python
+import kokex
+
+print(kokex.parse("kokex 0.0.11 버전에서는 패턴 규칙을 추가했습니다.", debug=True))
+
+# [root_000_000_002] [단어] [독립언] [독립어] 0/SN
+# [root_000_000_003] [단어] [독립언] [독립어] ./SY
+# [root_000_000_004] [단어] [독립언] [독립어] 0/SN
+# [root_000_000_005] [단어] [독립언] [독립어] ./SY
+# [root_000_000_006] [단어] [독립언] [독립어] 11/SN
+
+print(kokex.parse("kokex 0.0.11 버전에서는 패턴 규칙을 추가했습니다.", debug=True,
+                  custom_patterns=[{'pattern': r'\d+.\d+.\d+', 'tag': 'PT001'}]))
+
+# [root_000_000_002] [단어] [독립언] [독립어] 0.0.11/PT001
+```
